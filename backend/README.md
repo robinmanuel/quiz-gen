@@ -1,10 +1,47 @@
 # Quiz Generator Backend (FastAPI + OpenAI)
 
-Minimal FastAPI backend that generates quiz questions using OpenAI's Chat Completions API.
+Modular FastAPI backend for generating and managing quizzes using OpenAI's API.
+
+## Project Structure
+
+```
+backend/
+├── app/
+│   ├── __init__.py
+│   ├── main.py              # FastAPI app + router registration
+│   ├── config.py            # Pydantic settings / env vars
+│   ├── database.py          # SQLAlchemy engine, session, Base
+│   ├── security.py          # Password hashing, JWT tokens
+│   ├── dependencies.py      # DB session, current user auth
+│   ├── models/              # SQLAlchemy DB models
+│   │   ├── user.py
+│   │   ├── quiz.py
+│   │   ├── question.py
+│   │   └── attempt.py
+│   ├── schemas/             # Pydantic request/response models
+│   │   ├── user.py
+│   │   ├── quiz.py
+│   │   ├── question.py
+│   │   ├── attempt.py
+│   │   └── token.py
+│   ├── routers/             # API route handlers
+│   │   ├── auth.py          # register / login
+│   │   ├── users.py         # current user profile
+│   │   ├── quizzes.py       # generate, list, get, submit
+│   │   └── health.py        # health check
+│   └── services/            # Business logic
+│       ├── openai_service.py   # OpenAI API calls
+│       └── quiz_service.py     # Quiz assembly
+├── tests/                   # pytest tests
+├── .env                     # copy from .env.example
+├── .env.example
+├── requirements.txt
+└── README.md
+```
 
 ## Setup
 
-1. Create a virtual environment and activate it:
+1. Create & activate a virtual environment:
    ```bash
    python -m venv venv
    # Windows:
@@ -18,51 +55,46 @@ Minimal FastAPI backend that generates quiz questions using OpenAI's Chat Comple
    pip install -r requirements.txt
    ```
 
-3. Create a `.env` file and add your OpenAI API key:
+3. Create `.env` from the example and add your OpenAI key:
    ```bash
-   copy .env.example .env   # Windows
-   # or
-   cp .env.example .env     # Mac/Linux
-   # Then edit .env: OPENAI_API_KEY=sk-...
+   copy .env.example .env     # Windows
+   cp .env.example .env       # Mac/Linux
+   # Edit .env: OPENAI_API_KEY=sk-...
    ```
 
 4. Start the server:
    ```bash
-   uvicorn main:app --reload
+   uvicorn app.main:app --reload
    ```
 
-   API docs available at: http://localhost:8000/docs
+   Interactive API docs: http://localhost:8000/docs
 
-## Usage
+## Endpoints
 
-**POST** `http://localhost:8000/generate-quiz`
+| Method | Endpoint | Description | Auth |
+|--------|----------|-------------|------|
+| GET | `/health` | Health check | No |
+| POST | `/auth/register` | Register a new user | No |
+| POST | `/auth/token` | Login (get JWT access token) | No |
+| GET | `/users/me` | Current user profile | Yes |
+| POST | `/quizzes/generate` | Generate a quiz via OpenAI | Yes |
+| GET | `/quizzes` | List your quizzes | Yes |
+| GET | `/quizzes/{id}` | Get a single quiz | Yes |
+| POST | `/quizzes/{id}/submit` | Submit answers and get score | Yes |
 
-Request body:
-```json
-{
-  "topic": "JavaScript",
-  "num_questions": 5
-}
-```
+## Example: Generate a quiz
 
-Example response:
-```json
-{
-  "topic": "JavaScript",
-  "questions": [
-    {
-      "question": "What does `const` declare in JavaScript?",
-      "options": ["A constant variable", "A function", "A class", "A loop"],
-      "correct_answer_index": 0,
-      "explanation": "`const` declares a block-scoped variable that cannot be reassigned."
-    }
-  ]
-}
+```bash
+curl -X POST "http://localhost:8000/quizzes/generate" \
+  -H "Authorization: Bearer <your_access_token>" \
+  -H "Content-Type: application/json" \
+  -d '{"title": "JavaScript Basics", "topic": "JavaScript"}'
 ```
 
 ## Next steps
 
-- Add input validation refinements
-- Add a simple frontend to call this endpoint
-- Persist quizzes to a database
-- Add user accounts and quiz history
+- Add Alembic for database migrations
+- Add pytest test suite
+- Add rate limiting on OpenAI calls
+- Add caching (Redis) for frequent topics
+- Dockerize the app
