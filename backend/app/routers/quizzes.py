@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
-from app.database import SessionLocal
+from app.database import SessionLocal, get_db
 from app.models.quiz import Quiz
 from app.models.question import Question
 from app.models.attempt import Attempt
@@ -10,14 +10,6 @@ from app.schemas.attempt import AttemptCreate, AttemptOut
 from app.dependencies import get_current_user
 from app.services.quiz_service import build_quiz_data
 from app.models.user import User
-
-
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
 
 
 router = APIRouter(prefix="/quizzes", tags=["quizzes"])

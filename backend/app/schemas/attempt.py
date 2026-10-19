@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 from typing import Optional
+from datetime import datetime
 
 
 class AttemptCreate(BaseModel):
@@ -14,7 +15,7 @@ class AttemptOut(BaseModel):
     score: int
     total_questions: int
     correct_answers: int
-    submitted_at: str
+    submitted_at: datetime
 
     class Config:
         from_attributes = True
