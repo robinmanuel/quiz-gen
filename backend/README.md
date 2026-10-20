@@ -69,6 +69,29 @@ backend/
 
    Interactive API docs: http://localhost:8000/docs
 
+5. Start the frontend (in a separate terminal):
+   ```bash
+   cd ../frontend
+   npm install
+   npm run dev
+   ```
+   The app is served on http://localhost:5173 and proxies `/api/*` to this
+   server, so CORS never comes into play. See `frontend/README.md` for details.
+
+## Environment variables
+
+| Variable                | Description                                                        |
+|-------------------------|--------------------------------------------------------------------|
+| `DATABASE_URL`          | SQLAlchemy connection string. Use `sqlite:///./quiz_gen.db` locally |
+| `SECRET_KEY`            | JWT signing key — change this before deploying                      |
+| `ACCESS_TOKEN_EXPIRE_MINUTES` | Token lifetime (default 30)                                   |
+| `OPENAI_API_KEY`        | OpenAI key used to generate questions                               |
+| `QUIZ_FALLBACK_ENABLED` | `true` returns template questions when the OpenAI call fails       |
+
+`QUIZ_FALLBACK_ENABLED` keeps the API usable without a working OpenAI key
+(everything else returns the same response shape). Leave it `false` in
+production so provider failures are not silently masked.
+
 ## Endpoints
 
 | Method | Endpoint | Description | Auth |

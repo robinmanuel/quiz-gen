@@ -1,0 +1,73 @@
+# QuizGen
+
+An AI-powered quiz generator. Give it a topic and it writes a five-question
+multiple-choice quiz, then scores your attempt and explains every answer.
+
+```
+quiz-gen/
+├── backend/    # FastAPI + SQLAlchemy + OpenAI
+└── frontend/   # React 19 + TypeScript + Vite + Tailwind
+```
+
+## Running it locally
+
+Two terminals — the frontend proxies `/api/*` to the backend, so start the
+backend first.
+
+```bash
+# terminal 1 — API on http://127.0.0.1:8000
+cd backend
+pip install -r requirements.txt
+python -m uvicorn app.main:app --reload
+```
+
+```bash
+# terminal 2 — app on http://localhost:5173
+cd frontend
+npm install
+npm run dev
+```
+
+Then open <http://localhost:5173>, create an account and generate a quiz.
+
+## API
+
+| Method | Path                      | Auth | Purpose                              |
+| ------ | ------------------------- | ---- | ------------------------------------ |
+| `GET`  | `/health`                 | –    | Liveness check                       |
+| `POST` | `/auth/register`          | –    | Create a user                        |
+| `POST` | `/auth/token`             | –    | OAuth2 password login → JWT          |
+| `GET`  | `/users/me`               | ✓    | Current user                         |
+| `POST` | `/quizzes/generate`       | ✓    | Generate a quiz from a topic         |
+| `GET`  | `/quizzes/`               | ✓    | List the caller's quizzes            |
+| `GET`  | `/quizzes/{id}`           | ✓    | Fetch one quiz with its questions    |
+| `POST` | `/quizzes/{id}/submit`    | ✓    | Score an attempt                     |
+
+Full backend notes are in [`backend/README.md`](backend/README.md); frontend
+notes are in [`frontend/README.md`](frontend/README.md).
+
+## Configuration
+
+The backend reads `.env` (see `backend/.env.example`):
+
+| Variable                | Default                        | Notes                                          |
+| ----------------------- | ------------------------------ | ---------------------------------------------- |
+| `DATABASE_URL`          | `postgresql+psycopg2://...`    | Use `sqlite:///./quiz_gen.db` for local dev    |
+| `SECRET_KEY`            | `change-me-in-production`      | JWT signing key — always change this          |
+| `OPENAI_API_KEY`        | –                              | Required for real question generation          |
+| `QUIZ_FALLBACK_ENABLED` | `false`                        | `true` falls back to template questions        |
+
+With `QUIZ_FALLBACK_ENABLED=true` a failing OpenAI call returns template
+questions instead of a 500, which keeps the app usable without an API key.
+Leave it off in production so real failures stay visible.
+
+The frontend only needs `VITE_API_BASE_URL` (default `/api`).
+
+## Tests
+
+```bash
+cd backend && pytest          # API tests
+cd frontend && npm run lint   # lint
+cd frontend && npm run build  # type-check + production build
+cd frontend && npm run e2e    # browser smoke test (needs both servers running)
+```
