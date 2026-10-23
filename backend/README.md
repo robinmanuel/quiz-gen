@@ -86,11 +86,11 @@ backend/
 | `SECRET_KEY`            | JWT signing key — change this before deploying                      |
 | `ACCESS_TOKEN_EXPIRE_MINUTES` | Token lifetime (default 30)                                   |
 | `OPENAI_API_KEY`        | OpenAI key used to generate questions                               |
-| `QUIZ_FALLBACK_ENABLED` | `true` returns template questions when the OpenAI call fails       |
+| `QUIZ_FALLBACK_ENABLED` | `true` returns template questions when the OpenAI call fails or no key is set |
 
 `QUIZ_FALLBACK_ENABLED` keeps the API usable without a working OpenAI key
-(everything else returns the same response shape). Leave it `false` in
-production so provider failures are not silently masked.
+(everything else returns the same response shape). Set it to `false` in
+production when you want provider failures to surface instead of being masked.
 
 ## Endpoints
 

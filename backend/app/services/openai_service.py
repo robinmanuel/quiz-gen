@@ -7,9 +7,19 @@ from app.config import settings
 
 logger = logging.getLogger("quizgen")
 
-client = OpenAI(api_key=settings.OPENAI_API_KEY)
+# Google AI (Gemini) exposes an OpenAI-compatible chat completions API, so the
+# OpenAI SDK can talk to it by just pointing base_url at Google's endpoint.
+client = None
+api_key = settings.GOOGLE_API_KEY or settings.OPENAI_API_KEY
+if api_key:
+    client = OpenAI(
+        api_key=api_key,
+        base_url="https://generativelanguage.googleapis.com/v1beta/openai/",
+    )
 
-# Used when the OpenAI call is unavailable (no API key, rate limit, network
+GEMINI_MODEL = settings.GEMINI_MODEL or "gemini-2.0-flash"
+
+# Used when the generation call is unavailable (no API key, rate limit, network
 # error) and QUIZ_FALLBACK_ENABLED is on. Keeps the app usable in dev.
 _FALLBACK_TEMPLATES = [
     {
@@ -85,9 +95,17 @@ def _fallback_questions(topic: str, num_questions: int) -> list[dict]:
 
 
 def generate_quiz_questions(topic: str, num_questions: int = 5) -> list[dict]:
+    if not client:
+        if settings.QUIZ_FALLBACK_ENABLED:
+            logger.warning(
+                "No AI provider API key configured; using offline quiz templates."
+            )
+            return _fallback_questions(topic, num_questions)
+        raise RuntimeError("No AI provider API key configured for quiz generation.")
+
     try:
         completion = client.chat.completions.create(
-            model="gpt-3.5-turbo",
+            model=GEMINI_MODEL,
             temperature=0.7,
             messages=[
                 {
@@ -110,10 +128,10 @@ def generate_quiz_questions(topic: str, num_questions: int = 5) -> list[dict]:
         return json.loads(content)
     except Exception as exc:  # noqa: BLE001 - any provider failure is handled here
         if not settings.QUIZ_FALLBACK_ENABLED:
-            logger.error("OpenAI question generation failed: %s", exc)
+            logger.error("Gemini question generation failed: %s", exc)
             raise
 
         logger.warning(
-            "OpenAI question generation failed (%s); falling back to offline questions.", exc
+            "Gemini question generation failed (%s); falling back to offline questions.", exc
         )
         return _fallback_questions(topic, num_questions)

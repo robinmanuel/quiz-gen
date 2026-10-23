@@ -55,11 +55,12 @@ The backend reads `.env` (see `backend/.env.example`):
 | `DATABASE_URL`          | `postgresql+psycopg2://...`    | Use `sqlite:///./quiz_gen.db` for local dev    |
 | `SECRET_KEY`            | `change-me-in-production`      | JWT signing key — always change this          |
 | `OPENAI_API_KEY`        | –                              | Required for real question generation          |
-| `QUIZ_FALLBACK_ENABLED` | `false`                        | `true` falls back to template questions        |
+| `QUIZ_FALLBACK_ENABLED` | `true`                         | `true` falls back to template questions       |
 
-With `QUIZ_FALLBACK_ENABLED=true` a failing OpenAI call returns template
-questions instead of a 500, which keeps the app usable without an API key.
-Leave it off in production so real failures stay visible.
+With `QUIZ_FALLBACK_ENABLED=true` a failing or missing OpenAI key returns
+template questions instead of a 500, which keeps the app usable without an
+API key. Turn it off in production when you want real provider failures to be
+visible.
 
 The frontend only needs `VITE_API_BASE_URL` (default `/api`).
 
