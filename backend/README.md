@@ -55,11 +55,11 @@ backend/
    pip install -r requirements.txt
    ```
 
-3. Create `.env` from the example and add your OpenAI key:
+3. Create `.env` from the example and add an OpenAI or Google AI key:
    ```bash
    copy .env.example .env     # Windows
    cp .env.example .env       # Mac/Linux
-   # Edit .env: OPENAI_API_KEY=sk-...
+   # Edit .env: set OPENAI_API_KEY or GOOGLE_API_KEY
    ```
 
 4. Start the server:
@@ -86,11 +86,14 @@ backend/
 | `SECRET_KEY`            | JWT signing key — change this before deploying                      |
 | `ACCESS_TOKEN_EXPIRE_MINUTES` | Token lifetime (default 30)                                   |
 | `OPENAI_API_KEY`        | OpenAI key used to generate questions                               |
-| `QUIZ_FALLBACK_ENABLED` | `true` returns template questions when the OpenAI call fails or no key is set |
+| `OPENAI_MODEL`          | OpenAI model (default `gpt-4o-mini`)                                 |
+| `GOOGLE_API_KEY`        | Optional Gemini key; takes precedence over OpenAI when set           |
+| `GEMINI_MODEL`          | Gemini model (default `gemini-3.1-flash-lite`)                       |
+| `QUIZ_FALLBACK_ENABLED` | `false`; set to `true` to allow template questions on provider failure |
 
-`QUIZ_FALLBACK_ENABLED` keeps the API usable without a working OpenAI key
-(everything else returns the same response shape). Set it to `false` in
-production when you want provider failures to surface instead of being masked.
+With fallback disabled, provider failures surface instead of silently
+returning template questions that could be mistaken for generated output.
+Enable the setting only when offline template questions are desired.
 
 ## Endpoints
 

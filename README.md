@@ -54,13 +54,15 @@ The backend reads `.env` (see `backend/.env.example`):
 | ----------------------- | ------------------------------ | ---------------------------------------------- |
 | `DATABASE_URL`          | `postgresql+psycopg2://...`    | Use `sqlite:///./quiz_gen.db` for local dev    |
 | `SECRET_KEY`            | `change-me-in-production`      | JWT signing key — always change this          |
-| `OPENAI_API_KEY`        | –                              | Required for real question generation          |
-| `QUIZ_FALLBACK_ENABLED` | `true`                         | `true` falls back to template questions       |
+| `OPENAI_API_KEY`        | –                              | OpenAI key for real question generation        |
+| `GOOGLE_API_KEY`        | –                              | Optional Gemini key; takes precedence if set   |
+| `GEMINI_MODEL`          | `gemini-3.1-flash-lite`        | Gemini model used when `GOOGLE_API_KEY` is set |
+| `QUIZ_FALLBACK_ENABLED` | `false`                        | Opt in to template questions on provider failure |
 
-With `QUIZ_FALLBACK_ENABLED=true` a failing or missing OpenAI key returns
-template questions instead of a 500, which keeps the app usable without an
-API key. Turn it off in production when you want real provider failures to be
-visible.
+Set either `OPENAI_API_KEY` or `GOOGLE_API_KEY` for AI-generated questions.
+When both are set, Gemini is used. By default provider failures are visible
+rather than silently producing template questions. Set
+`QUIZ_FALLBACK_ENABLED=true` only if offline template questions are desired.
 
 The frontend only needs `VITE_API_BASE_URL` (default `/api`).
 

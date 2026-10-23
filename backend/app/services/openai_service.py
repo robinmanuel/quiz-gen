@@ -1,23 +1,19 @@
 import json
 import logging
+import time
 
+import httpx
 from openai import OpenAI
 
 from app.config import settings
 
 logger = logging.getLogger("quizgen")
 
-# Google AI (Gemini) exposes an OpenAI-compatible chat completions API, so the
-# OpenAI SDK can talk to it by just pointing base_url at Google's endpoint.
 client = None
-api_key = settings.GOOGLE_API_KEY or settings.OPENAI_API_KEY
-if api_key:
-    client = OpenAI(
-        api_key=api_key,
-        base_url="https://generativelanguage.googleapis.com/v1beta/openai/",
-    )
+if settings.OPENAI_API_KEY and not settings.GOOGLE_API_KEY:
+    client = OpenAI(api_key=settings.OPENAI_API_KEY)
 
-GEMINI_MODEL = settings.GEMINI_MODEL or "gemini-2.0-flash"
+GEMINI_MODEL = settings.GEMINI_MODEL or "gemini-3.1-flash-lite"
 
 # Used when the generation call is unavailable (no API key, rate limit, network
 # error) and QUIZ_FALLBACK_ENABLED is on. Keeps the app usable in dev.
@@ -94,7 +90,105 @@ def _fallback_questions(topic: str, num_questions: int) -> list[dict]:
     return questions
 
 
+def _generate_with_google(topic: str, num_questions: int) -> list[dict]:
+    if not settings.GOOGLE_API_KEY:
+        raise RuntimeError("GOOGLE_API_KEY is not configured")
+
+    prompt = (
+        "You are a quiz generator. Return ONLY valid JSON: an array of "
+        f"{num_questions} objects. Each object must contain exactly these keys: "
+        "question_text, options, correct_option, explanation. "
+        "options must be an array of 4 strings; correct_option must be one of A/B/C/D. "
+        f"Generate {num_questions} multiple-choice quiz questions about: {topic}."
+    )
+
+    for attempt in range(3):
+        try:
+            response = httpx.post(
+                f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent",
+                headers={"x-goog-api-key": settings.GOOGLE_API_KEY},
+                json={
+                    "contents": [{"parts": [{"text": prompt}]}],
+                    "generationConfig": {
+                        "temperature": 0.7,
+                        "maxOutputTokens": 4000,
+                        "responseMimeType": "application/json",
+                    },
+                },
+                timeout=90,
+            )
+            response.raise_for_status()
+
+            payload = response.json()
+            candidates = payload.get("candidates", [])
+            if not candidates:
+                raise ValueError("Gemini returned no candidates")
+            candidate = candidates[0]
+            parts = candidate.get("content", {}).get("parts", [])
+            if not parts:
+                raise ValueError("Gemini returned no content")
+
+            text = parts[0].get("text")
+            if text is None:
+                raise ValueError("Gemini response content was empty")
+
+            data = json.loads(text)
+            if not isinstance(data, list) or len(data) != num_questions:
+                raise ValueError(f"Gemini did not return exactly {num_questions} questions")
+            for question in data:
+                if (
+                    not isinstance(question, dict)
+                    or not isinstance(question.get("question_text"), str)
+                    or not question["question_text"].strip()
+                    or not isinstance(question.get("options"), list)
+                    or len(question["options"]) != 4
+                    or not all(isinstance(option, str) and option.strip() for option in question["options"])
+                    or question.get("correct_option") not in {"A", "B", "C", "D"}
+                    or not isinstance(question.get("explanation"), str)
+                    or not question["explanation"].strip()
+                ):
+                    raise ValueError("Gemini returned a question with an invalid shape")
+            return data
+        except httpx.HTTPStatusError as exc:
+            if exc.response.status_code < 500 and exc.response.status_code != 429:
+                raise
+            if attempt == 2:
+                raise
+            logger.warning(
+                "Gemini request failed on attempt %s/%s with HTTP %s; retrying.",
+                attempt + 1,
+                3,
+                exc.response.status_code,
+            )
+            time.sleep(2 ** attempt)
+        except (ValueError, json.JSONDecodeError, httpx.RequestError) as exc:
+            if attempt == 2:
+                raise
+            logger.warning(
+                "Gemini request failed on attempt %s/%s (%s); retrying.",
+                attempt + 1,
+                3,
+                exc,
+            )
+            time.sleep(2 ** attempt)
+
+    raise RuntimeError("Gemini generation retries exhausted")
+
+
 def generate_quiz_questions(topic: str, num_questions: int = 5) -> list[dict]:
+    if settings.GOOGLE_API_KEY:
+        try:
+            return _generate_with_google(topic, num_questions)
+        except Exception as exc:  # noqa: BLE001 - logging then fallback
+            if not settings.QUIZ_FALLBACK_ENABLED:
+                logger.error("Google Gemini question generation failed: %s", exc)
+                raise
+            logger.warning(
+                "Google Gemini question generation failed (%s); falling back to offline questions.",
+                exc,
+            )
+            return _fallback_questions(topic, num_questions)
+
     if not client:
         if settings.QUIZ_FALLBACK_ENABLED:
             logger.warning(
@@ -105,7 +199,7 @@ def generate_quiz_questions(topic: str, num_questions: int = 5) -> list[dict]:
 
     try:
         completion = client.chat.completions.create(
-            model=GEMINI_MODEL,
+            model=settings.OPENAI_MODEL,
             temperature=0.7,
             messages=[
                 {
@@ -125,13 +219,15 @@ def generate_quiz_questions(topic: str, num_questions: int = 5) -> list[dict]:
         )
 
         content = completion.choices[0].message.content
+        if content is None:
+            raise ValueError("Provider returned no content")
         return json.loads(content)
     except Exception as exc:  # noqa: BLE001 - any provider failure is handled here
         if not settings.QUIZ_FALLBACK_ENABLED:
-            logger.error("Gemini question generation failed: %s", exc)
+            logger.error("OpenAI question generation failed: %s", exc)
             raise
 
         logger.warning(
-            "Gemini question generation failed (%s); falling back to offline questions.", exc
+            "OpenAI question generation failed (%s); falling back to offline questions.", exc
         )
         return _fallback_questions(topic, num_questions)
