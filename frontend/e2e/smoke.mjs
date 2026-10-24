@@ -240,6 +240,28 @@ async function main() {
       state.text.includes('Quantum Computing'),
     )
 
+    await evaluate(clickText('button', 'Share publicly'))
+    for (let attempt = 0; attempt < 10; attempt += 1) {
+      if (await evaluate("document.body.innerText.includes('Make private')")) break
+      await sleep(300)
+    }
+    check('owner can publish their quiz', await evaluate("document.body.innerText.includes('Make private')"))
+
+    await evaluate(clickText('a', 'Community'))
+    await sleep(1000)
+    check('public quiz appears in the community directory', await evaluate("document.body.innerText.includes('Quantum Computing')"))
+    await evaluate(clickText('button', 'Take quiz'))
+    await sleep(1000)
+    state = await evaluate('({ url: location.pathname, text: document.body.innerText })')
+    check('share link opens the shared quiz page', /^\/shared\/\d+$/.test(state.url), `path=${state.url}`)
+    check('shared quiz page does not reveal answers early', !state.text.includes('Correct answer:'))
+    check(
+      'public quiz API omits correct answers before submission',
+      await evaluate(
+        "fetch(`/api/quizzes/shared/${location.pathname.split('/').pop()}`).then(r => r.json()).then(q => q.questions.every(question => !('correct_option' in question)))",
+      ),
+    )
+
     // --- sign out -------------------------------------------------------
     await evaluate(clickText('button', 'Log out'))
     for (let attempt = 0; attempt < 10; attempt += 1) {
@@ -248,6 +270,9 @@ async function main() {
       await sleep(500)
     }
     check('logout returns to the login page', state === '/login', `path=${state}`)
+
+    await goto(`${APP}/community`)
+    check('community directory is public while signed out', await evaluate("document.body.innerText.includes('Quantum Computing')"))
 
     await goto(`${APP}/`)
     state = await evaluate('location.pathname')

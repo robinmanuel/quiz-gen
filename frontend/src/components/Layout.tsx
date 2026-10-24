@@ -34,6 +34,9 @@ export function Layout() {
               <NavLink to="/generate" className={navLinkClass}>
                 Generate
               </NavLink>
+              <NavLink to="/community" className={navLinkClass}>
+                Community
+              </NavLink>
               <span className="ml-2 hidden max-w-[12rem] truncate text-sm text-zinc-400 sm:block">
                 {user?.username}
               </span>
@@ -43,6 +46,9 @@ export function Layout() {
             </div>
           ) : (
             <div className="flex items-center gap-2">
+              <NavLink to="/community" className={navLinkClass}>
+                Community
+              </NavLink>
               <NavLink to="/login" className={navLinkClass}>
                 Log in
               </NavLink>

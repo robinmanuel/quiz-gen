@@ -2,7 +2,8 @@
 
 An AI-powered quiz generator. Choose a general or difficult niche quiz, give it
 a topic, and it writes eight multiple-choice questions, then scores your attempt
-and explains every answer.
+and explains every answer. Quiz owners can share quizzes publicly, and the
+community page lists shared quizzes and a public leaderboard.
 
 ```
 quiz-gen/

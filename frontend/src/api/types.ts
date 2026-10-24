@@ -41,8 +41,49 @@ export interface Quiz {
   title: string
   topic: string
   quiz_type: QuizType
+  is_public: boolean
   owner_id: number
   questions: Question[]
+}
+
+export interface PublicQuiz {
+  id: number
+  title: string
+  topic: string
+  quiz_type: QuizType
+  owner_username: string
+  question_count: number
+  created_at: string
+}
+
+export interface SharedQuestion {
+  id: number
+  quiz_id: number
+  question_text: string
+  option_a: string
+  option_b: string
+  option_c: string
+  option_d: string
+}
+
+export interface SharedQuiz {
+  id: number
+  title: string
+  topic: string
+  quiz_type: QuizType
+  owner_username: string
+  questions: SharedQuestion[]
+}
+
+export interface LeaderboardEntry {
+  rank: number
+  username: string
+  best_score: number
+  correct_answers: number
+  total_questions: number
+  quiz_title: string
+  quiz_topic: string
+  submitted_at: string
 }
 
 export interface QuizCreate {
@@ -59,6 +100,11 @@ export interface Attempt {
   total_questions: number
   correct_answers: number
   submitted_at: string
+  review?: Array<{
+    question_id: number
+    correct_option: OptionKey
+    explanation: string | null
+  }>
 }
 
 /** Answers are sent as { question_id: "A" } — the keys are strings in JSON. */

@@ -117,8 +117,18 @@ Enable the setting only when offline template questions are desired.
 | GET | `/users/me` | Current user profile | Yes |
 | POST | `/quizzes/generate` | Generate an eight-question general or niche quiz | Yes |
 | GET | `/quizzes` | List your quizzes | Yes |
+| GET | `/quizzes/public` | Browse quizzes their owners shared publicly | No |
+| GET | `/quizzes/leaderboard` | View best scores on public quizzes | No |
+| GET | `/quizzes/shared/{id}` | Read a shared quiz without exposing its answer key | No |
+| PATCH | `/quizzes/{id}/share` | Make your quiz public or private | Yes |
 | GET | `/quizzes/{id}` | Get a single quiz | Yes |
 | POST | `/quizzes/{id}/submit` | Submit answers and get score | Yes |
+
+Shared quiz links and the public directory do not expose answer keys. Taking a
+shared quiz and recording a leaderboard score requires an account. The
+leaderboard shows usernames and each player's best score on quizzes currently
+shared publicly; making a quiz private removes its attempts from the public
+leaderboard.
 
 ## Example: Generate a niche quiz
 
