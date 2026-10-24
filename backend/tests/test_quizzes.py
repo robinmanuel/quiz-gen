@@ -1,4 +1,4 @@
-from app.models.quiz import Quiz
+﻿from app.models.quiz import Quiz
 from app.models.question import Question
 
 
@@ -13,20 +13,21 @@ def test_generate_quiz(client):
         data={"username": "bob", "password": "password123"},
     )
     token = login.json()["access_token"]
+    auth_headers = {"Authorization": f"Bearer {token}"}
 
     # Generate quiz
     r = client.post(
         "/quizzes/generate",
-        json={"title": "JS Basics", "topic": "JavaScript"},
-        headers={"Authorization": f"Bearer {token}"},
+        json={"title": "JS Basics", "topic": "JavaScript", "quiz_type": "niche"},
+        headers=auth_headers,
     )
     assert r.status_code == 200
     data = r.json()
     assert data["title"] == "JS Basics"
     assert data["topic"] == "JavaScript"
+    assert data["quiz_type"] == "niche"
     assert data["owner_id"] > 0
-    assert len(data["questions"]) == 5
-
+    assert len(data["questions"]) == 8
 
 def test_list_quizzes(client):
     client.post(
@@ -42,7 +43,7 @@ def test_list_quizzes(client):
     # Create a quiz
     client.post(
         "/quizzes/generate",
-        json={"title": "Quiz 1", "topic": "Topic 1"},
+        json={"title": "Quiz 1", "topic": "Topic 1", "quiz_type": "general"},
         headers={"Authorization": f"Bearer {token}"},
     )
 
@@ -64,7 +65,7 @@ def test_get_quiz_by_id(client):
 
     gen = client.post(
         "/quizzes/generate",
-        json={"title": "Quiz 1", "topic": "Topic 1"},
+        json={"title": "Quiz 1", "topic": "Topic 1", "quiz_type": "general"},
         headers={"Authorization": f"Bearer {token}"},
     )
     quiz_id = gen.json()["id"]
@@ -102,7 +103,7 @@ def test_submit_quiz(client):
 
     gen = client.post(
         "/quizzes/generate",
-        json={"title": "Quiz 1", "topic": "Topic 1"},
+        json={"title": "Quiz 1", "topic": "Topic 1", "quiz_type": "general"},
         headers={"Authorization": f"Bearer {token}"},
     )
     quiz_id = gen.json()["id"]
@@ -117,6 +118,6 @@ def test_submit_quiz(client):
     assert r.status_code == 200
     data = r.json()
     assert data["score"] == 100
-    assert data["correct_answers"] == 5
-    assert data["total_questions"] == 5
+    assert data["correct_answers"] == 8
+    assert data["total_questions"] == 8
     assert data["id"] > 0

@@ -19,7 +19,11 @@ def override_get_db(session_factory):
 
 
 # Mock OpenAI to avoid needing a real API key
-def mock_generate_quiz_questions(topic: str, num_questions: int = 5):
+def mock_generate_quiz_questions(
+    topic: str,
+    num_questions: int = 8,
+    quiz_type: str = "general",
+):
     return [
         {
             "question_text": f"What is {topic}?",

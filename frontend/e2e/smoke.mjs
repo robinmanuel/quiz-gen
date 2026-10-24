@@ -176,14 +176,27 @@ async function main() {
     // --- generate -------------------------------------------------------
     await goto(`${APP}/generate`)
     await evaluate(setValue('#topic', 'Quantum Computing'))
+    await evaluate(clickText('button', 'Generate quiz'))
+    await sleep(200)
+    check(
+      'quiz type must be selected',
+      await evaluate("document.body.innerText.includes('Please choose General or Niche.')"),
+    )
+    await evaluate("document.querySelector('input[name=\"quiz-type\"][value=\"general\"]').click()")
     await sleep(200)
     await evaluate(clickText('button', 'Generate quiz'))
-    await sleep(3500)
+    for (let attempt = 0; attempt < 90; attempt += 1) {
+      state = await evaluate(
+        '({ url: location.pathname, text: document.body.innerText, hasAlert: Boolean(document.querySelector(\'[role="alert"]\')) })',
+      )
+      if (/^\/quiz\/\d+$/.test(state.url) || state.hasAlert) break
+      await sleep(1000)
+    }
 
-    state = await evaluate('({ url: location.pathname, text: document.body.innerText })')
     check('generate opens the quiz', /^\/quiz\/\d+$/.test(state.url), `path=${state.url}`)
     check('quiz shows its topic', state.text.includes('Quantum Computing'))
-    check('quiz starts at question 1 of 5', state.text.includes('Question 1 of 5'))
+    check('quiz displays the General type', state.text.includes('General'))
+    check('quiz starts at question 1 of 8', state.text.includes('Question 1 of 8'))
     check('answers stay hidden before submitting', !state.text.includes('Correct answer:'))
 
     // --- take the quiz --------------------------------------------------
@@ -191,10 +204,10 @@ async function main() {
     await sleep(250)
     check(
       'picking an option marks it answered',
-      await evaluate("document.body.innerText.includes('1/5 answered')"),
+      await evaluate("document.body.innerText.includes('1/8 answered')"),
     )
 
-    for (let question = 0; question < 4; question += 1) {
+    for (let question = 0; question < 7; question += 1) {
       await evaluate(clickText('button', 'Next'))
       await sleep(400)
       await evaluate(clickText('button', 'B'))
@@ -203,7 +216,7 @@ async function main() {
 
     check(
       'navigating reaches the last question',
-      await evaluate("document.body.innerText.includes('Question 5 of 5')"),
+      await evaluate("document.body.innerText.includes('Question 8 of 8')"),
     )
 
     await evaluate(clickText('button', 'Submit answers'))
@@ -217,15 +230,23 @@ async function main() {
 
     // --- library --------------------------------------------------------
     await goto(`${APP}/`)
+    for (let attempt = 0; attempt < 15; attempt += 1) {
+      state = await evaluate('({ url: location.pathname, text: document.body.innerText })')
+      if (state.text.includes('Quantum Computing')) break
+      await sleep(1000)
+    }
     check(
       'quiz appears in the library',
-      await evaluate("document.body.innerText.includes('Quantum Computing')"),
+      state.text.includes('Quantum Computing'),
     )
 
     // --- sign out -------------------------------------------------------
     await evaluate(clickText('button', 'Log out'))
-    await sleep(1200)
-    state = await evaluate('location.pathname')
+    for (let attempt = 0; attempt < 10; attempt += 1) {
+      state = await evaluate('location.pathname')
+      if (state === '/login') break
+      await sleep(500)
+    }
     check('logout returns to the login page', state === '/login', `path=${state}`)
 
     await goto(`${APP}/`)

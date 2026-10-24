@@ -10,6 +10,7 @@ class Quiz(Base):
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String, nullable=False)
     topic = Column(String, nullable=False)
+    quiz_type = Column(String(20), nullable=False, server_default="general")
     owner_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 

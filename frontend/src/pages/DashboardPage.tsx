@@ -45,7 +45,7 @@ export function DashboardPage() {
         {!isPending && !isError && quizzes?.length === 0 && (
           <EmptyState
             title="No quizzes yet"
-            description="Ask for any topic and QuizGen will build a five-question multiple-choice quiz for you."
+            description="Choose General or Niche, then QuizGen will build an eight-question multiple-choice quiz."
             action={
               <Link to="/generate">
                 <Button>Generate your first quiz</Button>
@@ -60,7 +60,12 @@ export function DashboardPage() {
               <li key={quiz.id}>
                 <Card className="flex h-full flex-col justify-between gap-4 p-5 transition hover:border-indigo-500/40">
                   <div>
-                    <Badge tone="indigo">{quiz.topic}</Badge>
+                    <div className="flex flex-wrap gap-2">
+                      <Badge tone="indigo">{quiz.topic}</Badge>
+                      <Badge tone={quiz.quiz_type === 'niche' ? 'rose' : 'emerald'}>
+                        {quiz.quiz_type === 'niche' ? 'Niche' : 'General'}
+                      </Badge>
+                    </div>
                     <h2 className="mt-3 text-base font-semibold text-white">{quiz.title}</h2>
                     <p className="mt-1 text-xs text-zinc-500">
                       {quiz.questions.length} question{quiz.questions.length === 1 ? '' : 's'}

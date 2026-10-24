@@ -1,7 +1,8 @@
 # QuizGen
 
-An AI-powered quiz generator. Give it a topic and it writes a five-question
-multiple-choice quiz, then scores your attempt and explains every answer.
+An AI-powered quiz generator. Choose a general or difficult niche quiz, give it
+a topic, and it writes eight multiple-choice questions, then scores your attempt
+and explains every answer.
 
 ```
 quiz-gen/
@@ -18,6 +19,7 @@ backend first.
 # terminal 1 — API on http://127.0.0.1:8000
 cd backend
 pip install -r requirements.txt
+alembic upgrade head
 python -m uvicorn app.main:app --reload
 ```
 
@@ -31,6 +33,9 @@ npm run dev
 Then open <http://localhost:5173>, create an account and generate a quiz.
 
 ## API
+
+Quiz generation requires choosing General (broad, accessible questions) or
+Niche (difficult questions on specialized details) and returns eight questions.
 
 | Method | Path                      | Auth | Purpose                              |
 | ------ | ------------------------- | ---- | ------------------------------------ |

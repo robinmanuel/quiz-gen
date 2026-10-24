@@ -20,6 +20,7 @@ export interface TokenResponse {
 }
 
 export type OptionKey = 'A' | 'B' | 'C' | 'D'
+export type QuizType = 'general' | 'niche'
 
 export interface Question {
   id: number
@@ -39,6 +40,7 @@ export interface Quiz {
   id: number
   title: string
   topic: string
+  quiz_type: QuizType
   owner_id: number
   questions: Question[]
 }
@@ -46,6 +48,7 @@ export interface Quiz {
 export interface QuizCreate {
   title: string
   topic: string
+  quiz_type: QuizType
 }
 
 export interface Attempt {

@@ -62,14 +62,26 @@ backend/
    # Edit .env: set OPENAI_API_KEY or GOOGLE_API_KEY
    ```
 
-4. Start the server:
+4. Apply the database migrations:
+   ```bash
+   alembic upgrade head
+   ```
+   For a local database created by an older version of the app (before Alembic
+   tracked it), first back up the database, then mark the existing initial
+   schema as applied and run the new migration:
+   ```bash
+   alembic stamp 405269557eb2
+   alembic upgrade head
+   ```
+
+5. Start the server:
    ```bash
    uvicorn app.main:app --reload
    ```
 
    Interactive API docs: http://localhost:8000/docs
 
-5. Start the frontend (in a separate terminal):
+6. Start the frontend (in a separate terminal):
    ```bash
    cd ../frontend
    npm install
@@ -103,24 +115,22 @@ Enable the setting only when offline template questions are desired.
 | POST | `/auth/register` | Register a new user | No |
 | POST | `/auth/token` | Login (get JWT access token) | No |
 | GET | `/users/me` | Current user profile | Yes |
-| POST | `/quizzes/generate` | Generate a quiz via OpenAI | Yes |
+| POST | `/quizzes/generate` | Generate an eight-question general or niche quiz | Yes |
 | GET | `/quizzes` | List your quizzes | Yes |
 | GET | `/quizzes/{id}` | Get a single quiz | Yes |
 | POST | `/quizzes/{id}/submit` | Submit answers and get score | Yes |
 
-## Example: Generate a quiz
+## Example: Generate a niche quiz
 
 ```bash
 curl -X POST "http://localhost:8000/quizzes/generate" \
   -H "Authorization: Bearer <your_access_token>" \
   -H "Content-Type: application/json" \
-  -d '{"title": "JavaScript Basics", "topic": "JavaScript"}'
+  -d '{"title": "JavaScript Basics", "topic": "JavaScript", "quiz_type": "niche"}'
 ```
 
 ## Next steps
 
-- Add Alembic for database migrations
-- Add pytest test suite
 - Add rate limiting on OpenAI calls
 - Add caching (Redis) for frequent topics
 - Dockerize the app

@@ -98,7 +98,12 @@ export function QuizPage() {
   return (
     <div className="mx-auto w-full max-w-2xl animate-fade-up">
       <div className="mb-6">
-        <Badge tone="indigo">{quiz.topic}</Badge>
+        <div className="flex flex-wrap gap-2">
+          <Badge tone="indigo">{quiz.topic}</Badge>
+          <Badge tone={quiz.quiz_type === 'niche' ? 'rose' : 'emerald'}>
+            {quiz.quiz_type === 'niche' ? 'Niche' : 'General'}
+          </Badge>
+        </div>
         <h1 className="mt-3 text-2xl font-bold text-white">{quiz.title}</h1>
         <p className="mt-1 text-sm text-zinc-500">
           Question {index + 1} of {total}

@@ -14,6 +14,8 @@ from app.models.user import User
 
 router = APIRouter(prefix="/quizzes", tags=["quizzes"])
 
+QUESTION_COUNT = 8
+
 
 @router.post("/generate", response_model=QuizOut)
 def generate_quiz(
@@ -21,9 +23,19 @@ def generate_quiz(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    quiz_data = build_quiz_data(payload.topic, 5, payload.title)
+    quiz_data = build_quiz_data(
+        payload.topic,
+        QUESTION_COUNT,
+        payload.quiz_type,
+        payload.title,
+    )
 
-    db_quiz = Quiz(title=quiz_data["title"], topic=quiz_data["topic"], owner_id=current_user.id)
+    db_quiz = Quiz(
+        title=quiz_data["title"],
+        topic=quiz_data["topic"],
+        quiz_type=quiz_data["quiz_type"],
+        owner_id=current_user.id,
+    )
     db.add(db_quiz)
     db.flush()
 

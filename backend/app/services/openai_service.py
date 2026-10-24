@@ -1,6 +1,7 @@
 import json
 import logging
 import time
+from typing import Literal
 
 import httpx
 from openai import OpenAI
@@ -14,6 +15,7 @@ if settings.OPENAI_API_KEY and not settings.GOOGLE_API_KEY:
     client = OpenAI(api_key=settings.OPENAI_API_KEY)
 
 GEMINI_MODEL = settings.GEMINI_MODEL or "gemini-3.1-flash-lite"
+QuizType = Literal["general", "niche"]
 
 # Used when the generation call is unavailable (no API key, rate limit, network
 # error) and QUIZ_FALLBACK_ENABLED is on. Keeps the app usable in dev.
@@ -90,7 +92,26 @@ def _fallback_questions(topic: str, num_questions: int) -> list[dict]:
     return questions
 
 
-def _generate_with_google(topic: str, num_questions: int) -> list[dict]:
+def _generation_instructions(quiz_type: QuizType) -> str:
+    if quiz_type == "niche":
+        return (
+            "Create a NICHE quiz: make every question difficult and narrowly focused "
+            "on specialized details within the topic. Assume the learner already knows "
+            "the basics; test advanced concepts, subtle distinctions, and specific "
+            "applications. Avoid introductory or broad survey questions."
+        )
+    return (
+        "Create a GENERAL quiz: make questions accessible to a broad audience, cover "
+        "important foundational concepts and well-known facts across the topic, and "
+        "avoid obscure specialist details."
+    )
+
+
+def _generate_with_google(
+    topic: str,
+    num_questions: int,
+    quiz_type: QuizType,
+) -> list[dict]:
     if not settings.GOOGLE_API_KEY:
         raise RuntimeError("GOOGLE_API_KEY is not configured")
 
@@ -99,7 +120,8 @@ def _generate_with_google(topic: str, num_questions: int) -> list[dict]:
         f"{num_questions} objects. Each object must contain exactly these keys: "
         "question_text, options, correct_option, explanation. "
         "options must be an array of 4 strings; correct_option must be one of A/B/C/D. "
-        f"Generate {num_questions} multiple-choice quiz questions about: {topic}."
+        f"{_generation_instructions(quiz_type)} "
+        f"Generate exactly {num_questions} multiple-choice questions about: {topic}."
     )
 
     for attempt in range(3):
@@ -175,10 +197,14 @@ def _generate_with_google(topic: str, num_questions: int) -> list[dict]:
     raise RuntimeError("Gemini generation retries exhausted")
 
 
-def generate_quiz_questions(topic: str, num_questions: int = 5) -> list[dict]:
+def generate_quiz_questions(
+    topic: str,
+    num_questions: int = 8,
+    quiz_type: QuizType = "general",
+) -> list[dict]:
     if settings.GOOGLE_API_KEY:
         try:
-            return _generate_with_google(topic, num_questions)
+            return _generate_with_google(topic, num_questions, quiz_type)
         except Exception as exc:  # noqa: BLE001 - logging then fallback
             if not settings.QUIZ_FALLBACK_ENABLED:
                 logger.error("Google Gemini question generation failed: %s", exc)
@@ -208,12 +234,16 @@ def generate_quiz_questions(topic: str, num_questions: int = 5) -> list[dict]:
                         "You are a quiz generator. Return ONLY a JSON array where each item has: "
                         "question_text (string), options (array of 4 strings), "
                         "correct_option (string 'A'|'B'|'C'|'D'), and explanation (string). "
-                        "No markdown, no extra text."
+                        "No markdown, no extra text. "
+                        f"{_generation_instructions(quiz_type)}"
                     ),
                 },
                 {
                     "role": "user",
-                    "content": f"Generate {num_questions} multiple-choice quiz questions about: {topic}",
+                    "content": (
+                        f"Generate exactly {num_questions} multiple-choice quiz questions "
+                        f"about: {topic}. {_generation_instructions(quiz_type)}"
+                    ),
                 },
             ],
         )
