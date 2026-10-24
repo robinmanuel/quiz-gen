@@ -32,7 +32,7 @@ export function Layout() {
                 My quizzes
               </NavLink>
               <NavLink to="/generate" className={navLinkClass}>
-                Generate
+                Create quiz
               </NavLink>
               <NavLink to="/community" className={navLinkClass}>
                 Community

@@ -6,11 +6,14 @@ import type {
   PublicQuiz,
   Quiz,
   QuizCreate,
+  QuizManualCreate,
   SharedQuiz,
 } from './types'
 
 export const quizzesApi = {
   generate: (payload: QuizCreate) => api.post<Quiz>('/quizzes/generate', payload),
+
+  create: (payload: QuizManualCreate) => api.post<Quiz>('/quizzes/', payload),
 
   list: () => api.get<Quiz[]>('/quizzes/'),
 

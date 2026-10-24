@@ -52,11 +52,11 @@ export function DashboardPage() {
           <p className="mt-1.5 text-sm text-zinc-400">
             {quizzes?.length
               ? `${quizzes.length} quiz${quizzes.length === 1 ? '' : 'zes'} in your library.`
-              : 'Generate your first quiz to get started.'}
+              : 'Create your first quiz to get started.'}
           </p>
         </div>
         <Link to="/generate">
-          <Button>+ Generate quiz</Button>
+          <Button>+ Create quiz</Button>
         </Link>
       </div>
 
@@ -82,10 +82,10 @@ export function DashboardPage() {
         {!isPending && !isError && quizzes?.length === 0 && (
           <EmptyState
             title="No quizzes yet"
-            description="Choose General or Niche, then QuizGen will build an eight-question multiple-choice quiz."
+            description="Generate questions with AI, use your own study material, or write a quiz yourself."
             action={
               <Link to="/generate">
-                <Button>Generate your first quiz</Button>
+                <Button>Create your first quiz</Button>
               </Link>
             }
           />

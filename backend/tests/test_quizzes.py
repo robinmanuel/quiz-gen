@@ -29,6 +29,75 @@ def test_generate_quiz(client):
     assert data["owner_id"] > 0
     assert len(data["questions"]) == 8
 
+
+def test_create_manual_quiz(client):
+    client.post(
+        "/auth/register",
+        json={"email": "author@example.com", "username": "author", "password": "password123"},
+    )
+    login = client.post(
+        "/auth/token",
+        data={"username": "author", "password": "password123"},
+    )
+    token = login.json()["access_token"]
+    headers = {"Authorization": "Bearer " + token}
+    payload = {
+        "title": "My Python Quiz",
+        "topic": "Python",
+        "quiz_type": "niche",
+        "questions": [
+            {
+                "question_text": "Which type is immutable?",
+                "option_a": "list",
+                "option_b": "dict",
+                "option_c": "tuple",
+                "option_d": "set",
+                "correct_option": "C",
+                "explanation": "A tuple cannot be modified after creation.",
+            }
+        ],
+    }
+
+    response = client.post("/quizzes/", json=payload, headers=headers)
+
+    assert response.status_code == 200
+    quiz = response.json()
+    assert quiz["title"] == "My Python Quiz"
+    assert quiz["quiz_type"] == "niche"
+    assert quiz["is_public"] is False
+    assert len(quiz["questions"]) == 1
+    assert quiz["questions"][0]["correct_option"] == "C"
+
+
+def test_generate_quiz_from_source_material(client):
+    client.post(
+        "/auth/register",
+        json={"email": "source@example.com", "username": "source", "password": "password123"},
+    )
+    login = client.post(
+        "/auth/token",
+        data={"username": "source", "password": "password123"},
+    )
+    token = login.json()["access_token"]
+    headers = {"Authorization": "Bearer " + token}
+
+    response = client.post(
+        "/quizzes/generate",
+        json={
+            "title": "Study Notes Quiz",
+            "topic": "Plant biology",
+            "quiz_type": "general",
+            "source_text": "Chlorophyll is a green pigment in plants.",
+        },
+        headers=headers,
+    )
+
+    assert response.status_code == 200
+    quiz = response.json()
+    assert quiz["questions"][0]["question_text"] == "What detail appears in the source?"
+    assert quiz["is_public"] is False
+
+
 def test_list_quizzes(client):
     client.post(
         "/auth/register",

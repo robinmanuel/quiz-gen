@@ -23,10 +23,13 @@ def mock_generate_quiz_questions(
     topic: str,
     num_questions: int = 8,
     quiz_type: str = "general",
+    source_text: str | None = None,
 ):
     return [
         {
-            "question_text": f"What is {topic}?",
+            "question_text": (
+                f"What is {topic}?" if not source_text else "What detail appears in the source?"
+            ),
             "options": ["A", "B", "C", "D"],
             "correct_option": "A",
             "explanation": "Test explanation",

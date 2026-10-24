@@ -1,9 +1,9 @@
 # QuizGen
 
-An AI-powered quiz generator. Choose a general or difficult niche quiz, give it
-a topic, and it writes eight multiple-choice questions, then scores your attempt
-and explains every answer. Quiz owners can share quizzes publicly, and the
-community page lists shared quizzes and a public leaderboard.
+Create quizzes by generating questions from a topic, generating from pasted
+study material, or writing questions yourself. AI-generated quizzes have eight
+multiple-choice questions; manual quizzes can contain 1 to 50. Take quizzes,
+review answers, share quizzes publicly, and browse the community leaderboard.
 
 ```
 quiz-gen/
@@ -31,12 +31,14 @@ npm install
 npm run dev
 ```
 
-Then open <http://localhost:5173>, create an account and generate a quiz.
+Then open <http://localhost:5173>, create an account and create a quiz.
 
 ## API
 
-Quiz generation requires choosing General (broad, accessible questions) or
+AI quiz generation requires choosing General (broad, accessible questions) or
 Niche (difficult questions on specialized details) and returns eight questions.
+Users can also create a quiz manually with 1 to 50 questions or generate from
+pasted source material.
 
 | Method | Path                      | Auth | Purpose                              |
 | ------ | ------------------------- | ---- | ------------------------------------ |
@@ -45,6 +47,7 @@ Niche (difficult questions on specialized details) and returns eight questions.
 | `POST` | `/auth/token`             | –    | OAuth2 password login → JWT          |
 | `GET`  | `/users/me`               | ✓    | Current user                         |
 | `POST` | `/quizzes/generate`       | ✓    | Generate a quiz from a topic         |
+| `POST` | `/quizzes/`               | ✓    | Create a quiz with your own questions|
 | `GET`  | `/quizzes/`               | ✓    | List the caller's quizzes            |
 | `GET`  | `/quizzes/{id}`           | ✓    | Fetch one quiz with its questions    |
 | `POST` | `/quizzes/{id}/submit`    | ✓    | Score an attempt                     |

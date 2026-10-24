@@ -10,6 +10,7 @@ from app.schemas.quiz import (
     LeaderboardEntry,
     PublicQuizOut,
     QuizCreate,
+    QuizManualCreate,
     QuizOut,
     QuizShareUpdate,
     SharedQuizOut,
@@ -25,6 +26,47 @@ router = APIRouter(prefix="/quizzes", tags=["quizzes"])
 QUESTION_COUNT = 8
 
 
+def _persist_quiz(
+    db: Session,
+    owner_id: int,
+    title: str,
+    topic: str,
+    quiz_type: str,
+    questions: list[dict],
+) -> Quiz:
+    quiz = Quiz(
+        title=title,
+        topic=topic,
+        quiz_type=quiz_type,
+        owner_id=owner_id,
+    )
+    db.add(quiz)
+    db.flush()
+
+    for question in questions:
+        db.add(Question(quiz_id=quiz.id, **question))
+
+    db.commit()
+    db.refresh(quiz)
+    return quiz
+
+
+@router.post("/", response_model=QuizOut)
+def create_quiz(
+    payload: QuizManualCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    return _persist_quiz(
+        db,
+        current_user.id,
+        payload.title,
+        payload.topic,
+        payload.quiz_type,
+        [question.model_dump() for question in payload.questions],
+    )
+
+
 @router.post("/generate", response_model=QuizOut)
 def generate_quiz(
     payload: QuizCreate,
@@ -36,34 +78,29 @@ def generate_quiz(
         QUESTION_COUNT,
         payload.quiz_type,
         payload.title,
+        payload.source_text.strip() if payload.source_text else None,
     )
 
-    db_quiz = Quiz(
-        title=quiz_data["title"],
-        topic=quiz_data["topic"],
-        quiz_type=quiz_data["quiz_type"],
-        owner_id=current_user.id,
+    questions = [
+        {
+            "question_text": question["question_text"],
+            "option_a": question["options"][0],
+            "option_b": question["options"][1],
+            "option_c": question["options"][2],
+            "option_d": question["options"][3],
+            "correct_option": question["correct_option"],
+            "explanation": question.get("explanation"),
+        }
+        for question in quiz_data["questions"]
+    ]
+    return _persist_quiz(
+        db,
+        current_user.id,
+        quiz_data["title"],
+        quiz_data["topic"],
+        quiz_data["quiz_type"],
+        questions,
     )
-    db.add(db_quiz)
-    db.flush()
-
-    for q in quiz_data["questions"]:
-        options = q.get("options", ["", "", "", ""])
-        db_q = Question(
-            quiz_id=db_quiz.id,
-            question_text=q.get("question_text", ""),
-            option_a=options[0] if len(options) > 0 else "",
-            option_b=options[1] if len(options) > 1 else "",
-            option_c=options[2] if len(options) > 2 else "",
-            option_d=options[3] if len(options) > 3 else "",
-            correct_option=q.get("correct_option", "A"),
-            explanation=q.get("explanation", ""),
-        )
-        db.add(db_q)
-
-    db.commit()
-    db.refresh(db_quiz)
-    return db_quiz
 
 
 @router.get("/", response_model=List[QuizOut])

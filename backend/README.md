@@ -116,6 +116,7 @@ Enable the setting only when offline template questions are desired.
 | POST | `/auth/token` | Login (get JWT access token) | No |
 | GET | `/users/me` | Current user profile | Yes |
 | POST | `/quizzes/generate` | Generate an eight-question general or niche quiz | Yes |
+| POST | `/quizzes/` | Create a quiz with 1-50 manually written questions | Yes |
 | GET | `/quizzes` | List your quizzes | Yes |
 | GET | `/quizzes/public` | Browse quizzes their owners shared publicly | No |
 | GET | `/quizzes/leaderboard` | View best scores on public quizzes | No |
@@ -129,6 +130,11 @@ shared quiz and recording a leaderboard score requires an account. The
 leaderboard shows usernames and each player's best score on quizzes currently
 shared publicly; making a quiz private removes its attempts from the public
 leaderboard.
+
+Quiz generation can use a topic or up to 20,000 characters of pasted source
+material. Source-based questions are instructed to rely only on that material;
+provider failures are returned rather than replaced with generic fallback
+questions.
 
 ## Example: Generate a niche quiz
 

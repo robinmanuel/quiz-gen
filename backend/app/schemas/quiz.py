@@ -1,19 +1,23 @@
 from datetime import datetime
 from typing import List, Literal
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
-from app.schemas.question import QuestionOut
+from app.schemas.question import QuestionCreate, QuestionOut
 
 
 class QuizBase(BaseModel):
-    title: str
-    topic: str
+    title: str = Field(min_length=1, max_length=120)
+    topic: str = Field(min_length=1, max_length=120)
     quiz_type: Literal["general", "niche"]
 
 
 class QuizCreate(QuizBase):
-    pass
+    source_text: str | None = Field(default=None, max_length=20000)
+
+
+class QuizManualCreate(QuizBase):
+    questions: List[QuestionCreate] = Field(min_length=1, max_length=50)
 
 
 class QuizOut(QuizBase):
