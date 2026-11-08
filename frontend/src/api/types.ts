@@ -16,11 +16,12 @@ export interface UserCreate {
 
 export interface TokenResponse {
   access_token: string
+  refresh_token?: string
   token_type: string
 }
 
 export type OptionKey = 'A' | 'B' | 'C' | 'D'
-export type QuizType = 'general' | 'niche'
+export type QuizType = 'general' | 'niche' | 'beginner' | 'intermediate' | 'advanced'
 
 export interface Question {
   id: number
@@ -90,7 +91,26 @@ export interface QuizCreate {
   title: string
   topic: string
   quiz_type: QuizType
+  num_questions?: number
   source_text?: string
+}
+
+export interface QuizUpdate {
+  title?: string
+  topic?: string
+  quiz_type?: QuizType
+  is_public?: boolean
+}
+
+export interface UserAttempt {
+  id: number
+  quiz_id: number
+  quiz_title: string
+  quiz_topic: string
+  score: number
+  total_questions: number
+  correct_answers: number
+  submitted_at: string
 }
 
 export interface QuestionCreate {
