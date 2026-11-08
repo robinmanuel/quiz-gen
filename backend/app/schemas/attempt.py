@@ -1,6 +1,5 @@
-from pydantic import BaseModel
-from typing import Optional
 from datetime import datetime
+from pydantic import BaseModel, ConfigDict
 
 
 class AttemptCreate(BaseModel):
@@ -15,6 +14,8 @@ class QuestionReview(BaseModel):
 
 
 class AttemptOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
     quiz_id: int
     user_id: int
@@ -23,9 +24,6 @@ class AttemptOut(BaseModel):
     correct_answers: int
     submitted_at: datetime
     review: list[QuestionReview] = []
-
-    class Config:
-        from_attributes = True
 
 
 class UserAttemptOut(BaseModel):
@@ -37,3 +35,8 @@ class UserAttemptOut(BaseModel):
     total_questions: int
     correct_answers: int
     submitted_at: datetime
+
+
+class AttemptDetailOut(UserAttemptOut):
+    review: list[QuestionReview] = []
+

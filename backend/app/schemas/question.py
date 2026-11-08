@@ -1,6 +1,6 @@
 from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class QuestionBase(BaseModel):
@@ -18,8 +18,8 @@ class QuestionCreate(QuestionBase):
 
 
 class QuestionOut(QuestionBase):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
     quiz_id: int
 
-    class Config:
-        from_attributes = True

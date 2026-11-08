@@ -96,7 +96,10 @@ backend/
 |-------------------------|--------------------------------------------------------------------|
 | `DATABASE_URL`          | SQLAlchemy connection string. Use `sqlite:///./quiz_gen.db` locally |
 | `SECRET_KEY`            | JWT signing key — change this before deploying                      |
-| `ACCESS_TOKEN_EXPIRE_MINUTES` | Token lifetime (default 30)                                   |
+| `ACCESS_TOKEN_EXPIRE_MINUTES` | Access token lifetime (default 30)                            |
+| `REFRESH_TOKEN_EXPIRE_DAYS` | Refresh token lifetime in days (default 7)                       |
+| `RATE_LIMIT_GENERATE`   | Rate limit on AI generation endpoint (default `10/minute`)          |
+| `RATE_LIMIT_AUTH`       | Rate limit on login endpoint (default `20/minute`)                  |
 | `OPENAI_API_KEY`        | OpenAI key used to generate questions                               |
 | `OPENAI_MODEL`          | OpenAI model (default `gpt-4o-mini`)                                 |
 | `GOOGLE_API_KEY`        | Optional Gemini key; takes precedence over OpenAI when set           |
@@ -113,17 +116,29 @@ Enable the setting only when offline template questions are desired.
 |--------|----------|-------------|------|
 | GET | `/health` | Health check | No |
 | POST | `/auth/register` | Register a new user | No |
-| POST | `/auth/token` | Login (get JWT access token) | No |
+| POST | `/auth/token` | Login (get JWT access + refresh token pair) | No |
+| POST | `/auth/refresh` | Rotate refresh token for a new token pair | No |
+| POST | `/auth/logout` | Revoke current access and refresh tokens | Yes |
+| POST | `/auth/forgot-password` | Request a password reset token | No |
+| POST | `/auth/reset-password` | Reset password with a reset token | No |
 | GET | `/users/me` | Current user profile | Yes |
-| POST | `/quizzes/generate` | Generate an eight-question general or niche quiz | Yes |
+| PATCH | `/users/me` | Update username, email, or password | Yes |
+| DELETE | `/users/me` | Delete your account and associated data | Yes |
+| POST | `/quizzes/generate` | Generate 1–20 questions (default 8), general or niche | Yes |
 | POST | `/quizzes/` | Create a quiz with 1-50 manually written questions | Yes |
 | GET | `/quizzes` | List your quizzes | Yes |
+| GET | `/quizzes/attempts` | List your past quiz attempts and scores | Yes |
+| GET | `/quizzes/attempts/{id}` | Get attempt details and question review | Yes |
 | GET | `/quizzes/public` | Browse quizzes their owners shared publicly | No |
 | GET | `/quizzes/leaderboard` | View best scores on public quizzes | No |
+| GET | `/quizzes/{id}/leaderboard` | View best scores on a specific public quiz | No |
 | GET | `/quizzes/shared/{id}` | Read a shared quiz without exposing its answer key | No |
 | PATCH | `/quizzes/{id}/share` | Make your quiz public or private | Yes |
 | GET | `/quizzes/{id}` | Get a single quiz | Yes |
+| GET | `/quizzes/{id}/export` | Export quiz as JSON or CSV (`?format=json\|csv`) | Yes |
+| PATCH | `/quizzes/{id}` | Update quiz title, topic, type, or sharing | Yes |
 | DELETE | `/quizzes/{id}` | Delete a quiz owned by you | Yes |
+| DELETE | `/quizzes/admin/{id}` | Admin moderation takedown of any quiz | Admin |
 | POST | `/quizzes/{id}/submit` | Submit answers and get score | Yes |
 
 Shared quiz links and the public directory do not expose answer keys. Taking a

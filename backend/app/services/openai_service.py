@@ -15,7 +15,7 @@ if settings.OPENAI_API_KEY and not settings.GOOGLE_API_KEY:
     client = OpenAI(api_key=settings.OPENAI_API_KEY)
 
 GEMINI_MODEL = settings.GEMINI_MODEL or "gemini-3.1-flash-lite"
-QuizType = Literal["general", "niche"]
+QuizType = Literal["general", "niche", "beginner", "intermediate", "advanced"]
 
 # Used when the generation call is unavailable (no API key, rate limit, network
 # error) and QUIZ_FALLBACK_ENABLED is on. Keeps the app usable in dev.
@@ -99,6 +99,21 @@ def _generation_instructions(quiz_type: QuizType) -> str:
             "on specialized details within the topic. Assume the learner already knows "
             "the basics; test advanced concepts, subtle distinctions, and specific "
             "applications. Avoid introductory or broad survey questions."
+        )
+    if quiz_type == "beginner":
+        return (
+            "Create a BEGINNER quiz: focus on introductory concepts, core definitions, "
+            "and foundational facts suitable for newcomers to the topic."
+        )
+    if quiz_type == "intermediate":
+        return (
+            "Create an INTERMEDIATE quiz: test practical application, conceptual "
+            "connections, and moderate-depth scenarios beyond basic definitions."
+        )
+    if quiz_type == "advanced":
+        return (
+            "Create an ADVANCED quiz: challenge the learner with deep mechanisms, "
+            "edge cases, nuanced trade-offs, and expert-level problem-solving."
         )
     return (
         "Create a GENERAL quiz: make questions accessible to a broad audience, cover "

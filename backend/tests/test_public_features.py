@@ -82,6 +82,15 @@ def test_public_quizzes_and_leaderboard(client):
     assert leaderboard.json()[0]["best_score"] == 100
     assert leaderboard.json()[0]["quiz_title"] == "Python Lists"
 
+    # Per-quiz leaderboard
+    quiz_lb = client.get(f"/quizzes/{quiz['id']}/leaderboard")
+    assert quiz_lb.status_code == 200
+    assert len(quiz_lb.json()) == 1
+    assert quiz_lb.json()[0]["rank"] == 1
+    assert quiz_lb.json()[0]["username"] == "quiz_player"
+    assert quiz_lb.json()[0]["best_score"] == 100
+    assert quiz_lb.json()[0]["quiz_title"] == "Python Lists"
+
     unshared = client.patch(
         f"/quizzes/{quiz['id']}/share",
         json={"is_public": False},
@@ -92,6 +101,7 @@ def test_public_quizzes_and_leaderboard(client):
     assert client.get(f"/quizzes/shared/{quiz['id']}").status_code == 404
     assert client.get(f"/quizzes/{quiz['id']}", headers=player_headers).status_code == 404
     assert client.get("/quizzes/leaderboard").json() == []
+    assert client.get(f"/quizzes/{quiz['id']}/leaderboard").status_code == 404
 
 
 def test_only_quiz_owner_can_change_sharing(client):

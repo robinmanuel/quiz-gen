@@ -64,6 +64,16 @@ def client():
     import app.services.quiz_service as quiz_service
     quiz_service.generate_quiz_questions = mock_generate_quiz_questions
 
+    # Clear in-memory caches, token blocklist, and rate limiters between tests
+    from app.security import _revoked_tokens
+    from app.routers.quizzes import _cache, limiter as quizzes_limiter
+    from app.routers.auth import limiter as auth_limiter
+
+    _revoked_tokens.clear()
+    _cache.clear()
+    quizzes_limiter.reset()
+    auth_limiter.reset()
+
     with TestClient(app, raise_server_exceptions=False) as test_client:
         yield test_client
 

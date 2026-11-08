@@ -1,9 +1,4 @@
-from typing import Literal
-
-from app.services.openai_service import generate_quiz_questions
-
-
-QuizType = Literal["general", "niche"]
+from app.services.openai_service import QuizType, generate_quiz_questions
 
 
 def build_quiz_data(
@@ -20,3 +15,4 @@ def build_quiz_data(
         "quiz_type": quiz_type,
         "questions": questions,
     }
+
