@@ -1,15 +1,28 @@
 # QuizGen
 
 Create quizzes by generating questions from a topic, generating from pasted
-study material, or writing questions yourself. AI-generated quizzes have eight
-multiple-choice questions; manual quizzes can contain 1 to 50. Take quizzes,
-review answers, share quizzes publicly, and browse the community leaderboard.
+study material, or writing questions yourself. AI-generated quizzes support 1 to
+20 multiple-choice questions across `general`, `niche`, `beginner`,
+`intermediate`, and `advanced` tiers; manual quizzes can contain 1 to 50. Take
+quizzes, review answers, track attempt history, export to JSON/CSV, share
+quizzes publicly, and compete on global and per-quiz leaderboards.
 
 ```
 quiz-gen/
-├── backend/    # FastAPI + SQLAlchemy + OpenAI
-└── frontend/   # React 19 + TypeScript + Vite + Tailwind
+├── backend/            # FastAPI + SQLAlchemy + Alembic + OpenAI/Gemini
+├── frontend/           # React 19 + TypeScript + Vite + Tailwind
+└── docker-compose.yml  # PostgreSQL + Backend + Nginx Frontend
 ```
+
+## Quick Deployment (Docker Compose)
+
+```bash
+docker compose up --build -d
+```
+
+This starts PostgreSQL 16, runs Alembic database migrations automatically,
+starts the FastAPI backend on port `8000`, and serves the production React build
+behind Nginx on port `80` (with `/api/*` reverse-proxied to the backend).
 
 ## Running it locally
 
@@ -35,22 +48,34 @@ Then open <http://localhost:5173>, create an account and create a quiz.
 
 ## API
 
-AI quiz generation requires choosing General (broad, accessible questions) or
-Niche (difficult questions on specialized details) and returns eight questions.
-Users can also create a quiz manually with 1 to 50 questions or generate from
-pasted source material.
-
-| Method | Path                      | Auth | Purpose                              |
-| ------ | ------------------------- | ---- | ------------------------------------ |
-| `GET`  | `/health`                 | –    | Liveness check                       |
-| `POST` | `/auth/register`          | –    | Create a user                        |
-| `POST` | `/auth/token`             | –    | OAuth2 password login → JWT          |
-| `GET`  | `/users/me`               | ✓    | Current user                         |
-| `POST` | `/quizzes/generate`       | ✓    | Generate a quiz from a topic         |
-| `POST` | `/quizzes/`               | ✓    | Create a quiz with your own questions|
-| `GET`  | `/quizzes/`               | ✓    | List the caller's quizzes            |
-| `GET`  | `/quizzes/{id}`           | ✓    | Fetch one quiz with its questions    |
-| `POST` | `/quizzes/{id}/submit`    | ✓    | Score an attempt                     |
+| Method   | Path                        | Auth  | Purpose                                      |
+| -------- | --------------------------- | ----- | -------------------------------------------- |
+| `GET`    | `/health`                   | –     | Liveness & DB readiness check                |
+| `POST`   | `/auth/register`            | –     | Create a user                                |
+| `POST`   | `/auth/token`               | –     | OAuth2 login → access + refresh tokens       |
+| `POST`   | `/auth/refresh`             | –     | Rotate refresh token for a new token pair    |
+| `POST`   | `/auth/logout`              | ✓     | Revoke current access and refresh tokens     |
+| `POST`   | `/auth/forgot-password`     | –     | Generate a password reset token              |
+| `POST`   | `/auth/reset-password`      | –     | Reset password using a reset token           |
+| `GET`    | `/users/me`                 | ✓     | Current user profile                         |
+| `PATCH`  | `/users/me`                 | ✓     | Update email, username, or password          |
+| `DELETE` | `/users/me`                 | ✓     | Delete account and associated data           |
+| `POST`   | `/quizzes/generate`         | ✓     | Generate 1–20 AI questions from topic/notes  |
+| `POST`   | `/quizzes/`                 | ✓     | Create a quiz with 1–50 manual questions     |
+| `GET`    | `/quizzes/`                 | ✓     | List the caller's quizzes                    |
+| `GET`    | `/quizzes/attempts`         | ✓     | List the caller's past quiz attempts         |
+| `GET`    | `/quizzes/attempts/{id}`    | ✓     | Get attempt details and question review      |
+| `GET`    | `/quizzes/public`           | –     | Browse/search public quizzes (`?search=...`) |
+| `GET`    | `/quizzes/leaderboard`      | –     | Global public quiz leaderboard               |
+| `GET`    | `/quizzes/{id}/leaderboard` | –     | Per-quiz public leaderboard                  |
+| `GET`    | `/quizzes/shared/{id}`      | –     | Fetch shared quiz without answer keys        |
+| `PATCH`  | `/quizzes/{id}/share`       | ✓     | Toggle public/private sharing                |
+| `GET`    | `/quizzes/{id}`             | ✓     | Fetch one quiz with its questions            |
+| `GET`    | `/quizzes/{id}/export`      | ✓     | Export quiz as JSON or CSV (`?format=csv`)   |
+| `PATCH`  | `/quizzes/{id}`             | ✓     | Edit quiz title, topic, type, or sharing     |
+| `DELETE` | `/quizzes/{id}`             | ✓     | Delete a quiz owned by the caller            |
+| `DELETE` | `/quizzes/admin/{id}`       | Admin | Admin takedown of any quiz                   |
+| `POST`   | `/quizzes/{id}/submit`      | ✓     | Score an attempt and return explanations     |
 
 Full backend notes are in [`backend/README.md`](backend/README.md); frontend
 notes are in [`frontend/README.md`](frontend/README.md).
