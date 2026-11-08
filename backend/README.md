@@ -123,6 +123,7 @@ Enable the setting only when offline template questions are desired.
 | GET | `/quizzes/shared/{id}` | Read a shared quiz without exposing its answer key | No |
 | PATCH | `/quizzes/{id}/share` | Make your quiz public or private | Yes |
 | GET | `/quizzes/{id}` | Get a single quiz | Yes |
+| DELETE | `/quizzes/{id}` | Delete a quiz owned by you | Yes |
 | POST | `/quizzes/{id}/submit` | Submit answers and get score | Yes |
 
 Shared quiz links and the public directory do not expose answer keys. Taking a

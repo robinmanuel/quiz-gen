@@ -17,4 +17,4 @@ class Quiz(Base):
 
     owner = relationship("User", back_populates="quizzes")
     questions = relationship("Question", back_populates="quiz", cascade="all, delete-orphan")
-    attempts = relationship("Attempt", back_populates="quiz")
+    attempts = relationship("Attempt", back_populates="quiz", cascade="all, delete-orphan")

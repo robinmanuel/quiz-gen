@@ -1,4 +1,4 @@
-﻿from app.models.quiz import Quiz
+from app.models.quiz import Quiz
 from app.models.question import Question
 
 
@@ -190,3 +190,82 @@ def test_submit_quiz(client):
     assert data["correct_answers"] == 8
     assert data["total_questions"] == 8
     assert data["id"] > 0
+
+
+def test_delete_quiz(client):
+    # Register and login owner
+    client.post(
+        "/auth/register",
+        json={"email": "owner@example.com", "username": "owner", "password": "password123"},
+    )
+    login = client.post(
+        "/auth/token",
+        data={"username": "owner", "password": "password123"},
+    )
+    token = login.json()["access_token"]
+    headers = {"Authorization": f"Bearer {token}"}
+
+    # Generate a quiz
+    gen = client.post(
+        "/quizzes/generate",
+        json={"title": "To Delete", "topic": "Testing", "quiz_type": "general"},
+        headers=headers,
+    )
+    quiz_id = gen.json()["id"]
+
+    # Submit an attempt so attempts exist for this quiz
+    client.post(
+        f"/quizzes/{quiz_id}/submit",
+        json={"quiz_id": quiz_id, "answers": {}},
+        headers=headers,
+    )
+
+    # Delete the quiz
+    delete_res = client.delete(f"/quizzes/{quiz_id}", headers=headers)
+    assert delete_res.status_code == 204
+
+    # Quiz should no longer exist
+    get_res = client.get(f"/quizzes/{quiz_id}", headers=headers)
+    assert get_res.status_code == 404
+
+    # Quiz should no longer be listed in user's quizzes
+    list_res = client.get("/quizzes/", headers=headers)
+    assert not any(q["id"] == quiz_id for q in list_res.json())
+
+
+def test_delete_quiz_forbidden_or_not_found_for_other_user(client):
+    # Register owner and create quiz
+    client.post(
+        "/auth/register",
+        json={"email": "alice@example.com", "username": "alice", "password": "password123"},
+    )
+    login_alice = client.post(
+        "/auth/token",
+        data={"username": "alice", "password": "password123"},
+    )
+    token_alice = login_alice.json()["access_token"]
+
+    gen = client.post(
+        "/quizzes/generate",
+        json={"title": "Alice Quiz", "topic": "Math", "quiz_type": "general"},
+        headers={"Authorization": f"Bearer {token_alice}"},
+    )
+    quiz_id = gen.json()["id"]
+
+    # Register eve and attempt to delete alice's quiz
+    client.post(
+        "/auth/register",
+        json={"email": "eve@example.com", "username": "eve", "password": "password123"},
+    )
+    login_eve = client.post(
+        "/auth/token",
+        data={"username": "eve", "password": "password123"},
+    )
+    token_eve = login_eve.json()["access_token"]
+
+    delete_res = client.delete(
+        f"/quizzes/{quiz_id}",
+        headers={"Authorization": f"Bearer {token_eve}"},
+    )
+    assert delete_res.status_code == 404
+

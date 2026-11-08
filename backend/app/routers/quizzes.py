@@ -236,6 +236,21 @@ def get_quiz(
     return quiz
 
 
+@router.delete("/{quiz_id}", status_code=204)
+def delete_quiz(
+    quiz_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    quiz = db.query(Quiz).filter(Quiz.id == quiz_id, Quiz.owner_id == current_user.id).first()
+    if not quiz:
+        raise HTTPException(status_code=404, detail="Quiz not found")
+
+    db.delete(quiz)
+    db.commit()
+    return None
+
+
 @router.post("/{quiz_id}/submit", response_model=AttemptOut)
 def submit_quiz(
     quiz_id: int,
